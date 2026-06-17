@@ -1,0 +1,69 @@
+<div class="min-h-screen bg-stone-50 text-stone-950 dark:bg-stone-950 dark:text-stone-50">
+  <aside
+    class="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-stone-200 bg-white px-5 py-6 dark:border-stone-800 dark:bg-stone-900 lg:block">
+    <a routerLink="/dashboard" class="mb-8 block">
+      <p class="text-xs font-semibold uppercase tracking-widest text-teal-700 dark:text-teal-300">AA pessoal</p>
+      <h1 class="mt-1 text-2xl font-bold">Reuniões & reflexões</h1>
+    </a>
+
+    <nav class="space-y-1" aria-label="Navegacao principal">
+      @for (item of navItems; track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-100"
+        class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
+        <app-icon [name]="item.icon" />
+        {{ item.label }}
+      </a>
+      }
+    </nav>
+
+    <button type="button" class="btn-secondary mt-8 w-full" (click)="toggleTheme()">
+      <app-icon [name]="themeIcon()" />
+      Alternar tema
+    </button>
+  </aside>
+
+  <header
+    class="sticky top-0 z-20 border-b border-stone-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-stone-800 dark:bg-stone-900/95 lg:hidden">
+    <div class="flex items-center justify-between">
+      <a routerLink="/dashboard" class="font-bold">AA pessoal</a>
+      <div class="flex items-center gap-2">
+        <button type="button" class="btn-secondary px-2.5" (click)="toggleTheme()" aria-label="Alternar tema">
+          <app-icon [name]="themeIcon()" />
+        </button>
+        <button type="button" class="btn-secondary px-2.5" (click)="menuOpen.set(!menuOpen())" aria-label="Abrir menu">
+          <app-icon [name]="menuOpen() ? 'x' : 'menu'" />
+        </button>
+      </div>
+    </div>
+    @if (menuOpen()) {
+    <nav class="mt-3 grid gap-1" aria-label="Navegacao movel">
+      @for (item of navItems; track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-100"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium" (click)="menuOpen.set(false)">
+        <app-icon [name]="item.icon" />
+        {{ item.label }}
+      </a>
+      }
+    </nav>
+    }
+  </header>
+
+  <main class="px-4 py-6 sm:px-6 lg:ml-72 lg:px-8">
+    <div class="mx-auto max-w-7xl">
+      <router-outlet />
+    </div>
+  </main>
+
+  <div class="fixed bottom-4 right-4 z-50 grid w-[min(92vw,24rem)] gap-2" aria-live="polite">
+    @for (message of toast.messages(); track message.id) {
+    <button type="button" class="rounded-lg border px-4 py-3 text-left text-sm shadow-lg"
+      [class.border-teal-200]="message.kind === 'success'" [class.bg-teal-50]="message.kind === 'success'"
+      [class.text-teal-900]="message.kind === 'success'" [class.border-red-200]="message.kind === 'error'"
+      [class.bg-red-50]="message.kind === 'error'" [class.text-red-900]="message.kind === 'error'"
+      [class.border-stone-200]="message.kind === 'info'" [class.bg-white]="message.kind === 'info'"
+      [class.text-stone-900]="message.kind === 'info'" (click)="toast.dismiss(message.id)">
+      {{ message.text }}
+    </button>
+    }
+  </div>
+</div>
