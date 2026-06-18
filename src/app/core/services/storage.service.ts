@@ -3,6 +3,7 @@ import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { AppData, ThemePreference } from '../models/app-data.model';
 import { Meeting, MeetingDraft } from '../models/meeting.model';
 import { Reflection } from '../models/reflection.model';
+import { FirebaseDataService } from './firebase-data.service';
 import { ToastService } from './toast.service';
 
 const STORAGE_KEY = 'aa-meetings-manager:data:v1';
@@ -63,7 +64,9 @@ const initialData: AppData = {
 export class StorageService {
   private readonly toast = inject(ToastService);
   private readonly document = inject(DOCUMENT);
+  private readonly firebase = inject(FirebaseDataService);
   private readonly data = signal<AppData>(this.load());
+  private readonly cloudReady = signal(false);
 
   readonly meetings = computed(() =>
     [...this.data().meetings].sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
@@ -72,12 +75,22 @@ export class StorageService {
     [...this.data().reflections].sort((a, b) => b.date.localeCompare(a.date))
   );
   readonly theme = computed(() => this.data().theme);
+  readonly syncStatus = this.firebase.syncStatus;
 
   constructor() {
+    void this.restoreCloudData();
+
     effect(() => {
       const data = this.data();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       this.document.documentElement.classList.toggle('dark', data.theme === 'dark');
+    });
+
+    effect(() => {
+      const data = this.data();
+      if (this.cloudReady() && this.firebase.enabled()) {
+        void this.firebase.saveData(data);
+      }
     });
   }
 
@@ -170,5 +183,22 @@ export class StorageService {
     } catch {
       return initialData;
     }
+  }
+
+  private async restoreCloudData(): Promise<void> {
+    if (!this.firebase.enabled()) {
+      this.cloudReady.set(true);
+      return;
+    }
+
+    const cloudData = await this.firebase.loadData();
+    if (cloudData) {
+      this.data.set(cloudData);
+      this.toast.show('Dados carregados do Firebase.', 'success');
+    } else {
+      await this.firebase.saveData(this.data());
+      this.toast.show('Firebase conectado. Dados locais enviados.', 'success');
+    }
+    this.cloudReady.set(true);
   }
 }

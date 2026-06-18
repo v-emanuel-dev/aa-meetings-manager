@@ -8,3 +8,5 @@ export interface AppData {
   reflections: Reflection[];
   theme: ThemePreference;
 }
+
+export type SyncStatus = 'disabled' | 'connecting' | 'synced' | 'saving' | 'error';

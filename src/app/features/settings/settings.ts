@@ -23,6 +23,15 @@ import { Icon } from '../../shared/components/icon/icon';
         </article>
 
         <article class="panel space-y-4">
+          <h3 class="text-xl font-bold">Firebase</h3>
+          <div class="flex items-center justify-between gap-3 rounded-md bg-stone-100 p-3 text-sm dark:bg-stone-800">
+            <span>Status da sincronização</span>
+            <strong>{{ syncLabel() }}</strong>
+          </div>
+          <p class="text-sm text-stone-600 dark:text-stone-300">Preencha <code>src/environments/environment.ts</code> para sincronizar reuniões e reflexões no Firestore.</p>
+        </article>
+
+        <article class="panel space-y-4">
           <h3 class="text-xl font-bold">Exportar</h3>
           <p class="text-sm text-stone-600 dark:text-stone-300">Baixe um arquivo JSON com reuniões, presenças, reflexões e preferência de tema.</p>
           <button type="button" class="btn-primary" (click)="downloadJson()"><app-icon name="download" /> Exportar JSON</button>
@@ -50,6 +59,17 @@ export class Settings {
   readonly confirmation = signal('');
   importText = '';
   @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
+
+  syncLabel(): string {
+    const labels = {
+      disabled: 'Desativado',
+      connecting: 'Conectando',
+      synced: 'Sincronizado',
+      saving: 'Salvando',
+      error: 'Erro'
+    };
+    return labels[this.storage.syncStatus()];
+  }
 
   downloadJson(): void {
     const blob = new Blob([this.storage.exportData()], { type: 'application/json' });

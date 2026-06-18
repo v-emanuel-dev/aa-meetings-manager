@@ -10,6 +10,7 @@ Aplicacao web pessoal para acompanhar reunioes de Alcoolicos Anonimos, registrar
 - Reactive Forms e Signals
 - Tailwind CSS 4
 - LocalStorage para persistencia inicial
+- Firebase Firestore opcional para sincronizacao em nuvem
 - Icones em SVG no estilo Heroicons
 
 ## Funcionalidades
@@ -31,6 +32,42 @@ npm start
 ```
 
 Depois acesse o endereco exibido pelo Angular CLI, normalmente `http://localhost:4200`.
+
+## Firebase / Firestore
+
+A aplicacao funciona sem Firebase. Enquanto `src/environments/environment.ts` estiver com campos vazios, os dados ficam apenas no `LocalStorage`.
+
+Para ativar a sincronizacao:
+
+1. Crie um projeto no Firebase Console.
+2. Adicione um app Web ao projeto.
+3. Copie a configuracao do SDK Web para `src/environments/environment.ts`.
+4. Ative o Firestore Database no modo de producao ou teste.
+5. Ajuste as regras do Firestore conforme seu uso.
+6. Rode novamente `npm start`.
+
+O documento usado por padrao e:
+
+```text
+aaPersonal/defaultProfile
+```
+
+Voce pode alterar esse caminho em `firebaseDocumentPath`. Use sempre um caminho de documento com numero par de segmentos, por exemplo `aaPersonal/victor` ou `users/meu-id-aa/data/profile`.
+
+Exemplo de regras simples para teste local:
+
+```text
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /aaPersonal/{profileId} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+Essas regras abertas servem apenas para desenvolvimento. Para uso real, habilite Authentication e restrinja leitura/escrita ao usuario autenticado.
 
 ## Validacao feita neste workspace
 
