@@ -67,6 +67,50 @@ import { Icon } from '../../shared/components/icon/icon';
           <p class="panel text-stone-600 dark:text-stone-300">Nenhuma reflexao encontrada.</p>
         }
       </div>
+
+      @if (reflectionToDelete(); as reflection) {
+        <div class="fixed inset-0 z-50 grid place-items-center bg-stone-950/60 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="delete-reflection-title">
+          <div class="w-full max-w-lg rounded-lg border border-red-200 bg-white p-6 shadow-2xl dark:border-red-900 dark:bg-stone-900">
+            <div class="flex items-start gap-4">
+              <div class="grid size-11 shrink-0 place-items-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-200">
+                <app-icon name="trash" />
+              </div>
+              <div>
+                <h3 id="delete-reflection-title" class="text-xl font-bold">Excluir reflexão?</h3>
+                <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">Essa ação remove o registro do diário e não pode ser desfeita.</p>
+              </div>
+            </div>
+
+            <dl class="mt-5 grid gap-3 rounded-md bg-red-50 p-4 text-sm text-red-950 dark:bg-red-950/40 dark:text-red-50">
+              <div>
+                <dt class="font-semibold text-red-700 dark:text-red-200">Data</dt>
+                <dd class="mt-1 font-medium">{{ reflection.date | date: 'dd/MM/yyyy' }}</dd>
+              </div>
+              <div>
+                <dt class="font-semibold text-red-700 dark:text-red-200">Título</dt>
+                <dd class="mt-1 font-medium">{{ reflection.title || 'Reflexão sem título' }}</dd>
+              </div>
+              @if (meetingTitle(reflection.meetingId); as title) {
+                <div>
+                  <dt class="font-semibold text-red-700 dark:text-red-200">Reunião associada</dt>
+                  <dd class="mt-1 font-medium">{{ title }}</dd>
+                </div>
+              }
+              <div>
+                <dt class="font-semibold text-red-700 dark:text-red-200">Texto</dt>
+                <dd class="mt-1 max-h-28 overflow-hidden whitespace-pre-wrap">{{ reflection.content }}</dd>
+              </div>
+            </dl>
+
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+              <button type="button" class="btn-danger" (click)="confirmDelete()">
+                <app-icon name="trash" /> Excluir reflexão
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </section>
   `
 })
@@ -75,6 +119,7 @@ export class Reflections {
   readonly storage = inject(StorageService);
   readonly query = signal('');
   readonly editingId = signal<string | null>(null);
+  readonly reflectionToDelete = signal<Reflection | null>(null);
   readonly form = this.fb.nonNullable.group({
     date: [new Date().toISOString().slice(0, 10), Validators.required],
     title: [''],
@@ -111,9 +156,24 @@ export class Reflections {
   }
 
   remove(id: string): void {
-    if (confirm('Excluir esta reflexao?')) {
-      this.storage.deleteReflection(id);
+    const reflection = this.storage.reflections().find((item) => item.id === id);
+    if (reflection) {
+      this.reflectionToDelete.set(reflection);
     }
+  }
+
+  confirmDelete(): void {
+    const reflection = this.reflectionToDelete();
+    if (!reflection) {
+      return;
+    }
+
+    this.storage.deleteReflection(reflection.id);
+    this.reflectionToDelete.set(null);
+  }
+
+  cancelDelete(): void {
+    this.reflectionToDelete.set(null);
   }
 
   meetingTitle(id?: string): string | undefined {
